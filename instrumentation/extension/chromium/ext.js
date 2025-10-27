@@ -336,7 +336,6 @@ chrome.webRequest.onSendHeaders.addListener(
     (details) => {onSendHeaders(details)},
     filter,["requestHeaders", "extraHeaders"]);
 
-
 chrome.scripting.registerContentScripts([
 {
     id: 'instr',
