@@ -31,5 +31,4 @@ script sử dụng các Docker images từ GitHub Container Registry của `oobb
 | `wpt-trace-matching` | Phân tích trace `.json` từ quá trình test | `ghcr.io/oobbooz/wpt-trace-matching:latest` |
 | `wpt-safari-runner` | (Tùy chọn) Chạy test trên Safari | `ghcr.io/oobbooz/wpt-safari-runner:latest` |
 
-- Trace .json
-  File trace `.json` được lưu trên host, thư mục mặc định `traces/ `
+#  File trace `.json` được lưu trên host, thư mục mặc định `traces/ `
