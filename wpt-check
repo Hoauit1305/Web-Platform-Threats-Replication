@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+WPTCHECK_ROOT="$(dirname "$(realpath $0)")"
+REGISTRY=ghcr.io/oobbooz   
+
+RUNNER="${REGISTRY}/wpt-runner:latest"
+TRACEMATCHING="${REGISTRY}/wpt-trace-matching:latest"
+
+print_usage () {
+    echo "Usage: $0 [ -h | -l FOLDER | -t TIMEOUT ] ( pull | build | clean | run BROWSER TEST| verify JSON-TRACE )"
+}
+
+docker info &> /dev/null || {
+    echo "Error connecting to docker daemon. Make sure your user has the correct permissions, e.g., is part of the 'docker' group."
+    exit 1
+}
+
+# Lưu traces trên host
+TRACE_DIR="${WPTCHECK_ROOT}/traces"
+mkdir -p "${TRACE_DIR}"
+time=$(date +%s.%N)
+
+TIMEOUT="600"
+CONTAINER_NAME_OVERRIDE=""
+
+run () {
+    local browser=$1
+    local test=$2
+    local name="wpt-runner-${browser}-${time}"
+    if [ ! -z $CONTAINER_NAME_OVERRIDE ]; then
+        name="${CONTAINER_NAME_OVERRIDE}"
+    fi
+
+    docker run --stop-timeout "${TIMEOUT}" \
+        --name "${name}" --rm -ti \
+        -v "${TRACE_DIR}:/home/test/Downloads/" \
+        "${RUNNER}" "${browser}" "${test}" || true
+}
+
+verify () {
+    local json="$(ls "$TRACE_DIR" | head -n1)"
+    local name="z3-${time}"
+    if [ ! -z $CONTAINER_NAME_OVERRIDE ]; then
+        name="${CONTAINER_NAME_OVERRIDE}"
+    fi
+    docker run --name "parse-trace-${time}" --rm -i -v "${TRACE_DIR}:/mnt" "${TRACEMATCHING}" parse_trace "$json" | \
+        docker run --name "${name}" --rm -i "${TRACEMATCHING}" z3_wrapper -t "${TIMEOUT}"
+}
+
+if [[ $# -gt 0 ]]; then
+    while getopts ":n:t:l:h" ARG; do
+        case "$ARG" in
+            n)
+                CONTAINER_NAME_OVERRIDE="${OPTARG}"
+                ;;
+            t)
+                TIMEOUT="${OPTARG}"
+                ;;
+            l)
+                docker run --name "list-tests-${time}" --rm -ti "${RUNNER}" list-tests "${OPTARG}"
+                exit 0
+                ;;
+            h)
+                print_usage; exit 0
+                ;;
+            ?)
+                echo "Invalid option: ${OPTARG}"
+                ;;
+        esac
+    done
+    shift "$((OPTIND - 1))"
+
+    case $1 in
+        pull)  make pull "REGISTRY=${REGISTRY}" ;;
+        build) make build "REGISTRY=${REGISTRY}" ;;
+        clean) make clean "REGISTRY=${REGISTRY}" ;;
+        run)
+            shift
+            [[ $# -eq 2 ]] || {
+                echo "Please specify a browser and a test!"
+                print_usage; exit 1
+            }
+            run "$@"
+            verify
+            ;;
+        verify)
+            shift
+            [[ $# -eq 1 ]] || {
+                echo "Please specify a json file"
+                print_usage; exit 1
+            }
+            cp "$1" "${TRACE_DIR}"
+            verify
+            ;;
+        *)
+            echo 'Unknown command!'
+            print_usage; exit 1
+    esac
+else
+    print_usage
+fi
