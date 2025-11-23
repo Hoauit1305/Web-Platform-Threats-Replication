@@ -3,9 +3,7 @@
 1.  `trace_matching.smt`
 
     - Chức năng: Định nghĩa invariant ở dạng SMT-LIB thô
-    - Đầu vào: 9 invariant
-    - Đầu ra: SMT-LIB thô (chưa expand macro)
-
+  
 2.  `trace_matching_macroexpand.el`
 
     - Chức năng:
