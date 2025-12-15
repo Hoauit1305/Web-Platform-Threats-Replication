@@ -1,7 +1,7 @@
 1. Cấu trúc Thư mục
 
 - chromium/, firefox/, safari/: Chứa các kết quả đã chạy pipeline cho từng trình duyệt. Bên trong mỗi thư mục trình duyệt:
-- Các thư mục con (ví dụ: cookie-serialization-invariant/) chứa dấu vết thực thi (:json) và đầu ra Z3 (:z3) tương ứng đã được đánh dấu là SAT (Satisfiable).
+  + Các thư mục con (ví dụ: cookie-serialization-invariant/) chứa dấu vết thực thi (:json) và đầu ra Z3 (:z3) tương ứng đã được đánh dấu là SAT (Satisfiable).
 - check-results.py: Script Python tự động hóa việc thực hiện các thử nghiệm.
 - results.json: Tệp JSON tổng hợp kết quả (Mục 5.1), được phân loại theo [browser][invariant][test].
 
